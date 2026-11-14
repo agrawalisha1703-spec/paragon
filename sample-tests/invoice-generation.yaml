@@ -1,0 +1,43 @@
+provider: mock
+
+tests:
+  - name: "Generate JSON Invoice"
+    prompt: "Generate a JSON invoice with fields: id, total, date"
+    assertions:
+      - type: "isValidJson"
+      
+      - type: "contains"
+        value: "id"
+        
+      - type: "contains"
+        value: "total"
+        
+      - type: "regex"
+        value: ".*INV-.*"
+        
+      - type: "regex"
+        value: "\\{.*\\}"
+      
+  - name: "Generate CSV Row"
+    prompt: "Generate a CSV row with columns: name, age, city"
+    assertions:
+      - type: "contains"
+        value: "John"
+        
+      - type: "contains"
+        value: "30"
+        
+      - type: "regex"
+        value: ".*,.*,.*"
+        
+  - name: "Simple Greeting"
+    prompt: "Say hello to the user"
+    assertions:
+      - type: "contains"
+        value: "Hello"
+        
+      - type: "contains"
+        value: "Paragon"
+        
+      - type: "regex"
+        value: "^Hello.*"
