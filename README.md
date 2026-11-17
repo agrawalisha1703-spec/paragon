@@ -56,6 +56,19 @@ cd paragon
 mvn clean package
 ```
 
+### Run Tests
+
+```bash
+# Run the comprehensive unit test suite (99 tests)
+mvn clean test
+
+# View code coverage report
+open target/site/jacoco/index.html
+```
+
+**Test Status:** ✅ 99/99 tests passing | 42.6% code coverage  
+See [TEST_SUMMARY.md](TEST_SUMMARY.md) for detailed test results.
+
 ### Run
 
 ```bash
