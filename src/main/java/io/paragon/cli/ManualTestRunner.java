@@ -4,18 +4,37 @@ import io.paragon.cli.loader.YamlLoader;
 import io.paragon.cli.model.TestSuite;
 import io.paragon.cli.report.ConsoleReporter;
 import io.paragon.cli.runner.TestRunner;
+import io.paragon.cli.provider.ProviderFactory;
 
 /**
  * Manual test runner to verify the working of the Paragon CLI infrastructure.
- * This demonstrates end-to-end testing: YAML loading → provider calls → assertions → reporting.
+ * Supports multiple providers (mock, openai, anthropic) and response caching.
  */
 public class ManualTestRunner {
     public static void main(String[] args) {
         try {
-            String testFilePath = args.length > 0 ? args[0] : "sample-tests/invoice-generation.yaml";
+            // Parse command-line arguments
+            String testFilePath = "sample-tests/invoice-generation.yaml";
+            String apiKey = null;
+            boolean enableCache = false;
+            String providerOverride = null;
+            
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("-f") || args[i].equals("--file")) {
+                    testFilePath = args[++i];
+                } else if (args[i].equals("-k") || args[i].equals("--api-key")) {
+                    apiKey = args[++i];
+                } else if (args[i].equals("-c") || args[i].equals("--cache")) {
+                    enableCache = true;
+                } else if (args[i].equals("-p") || args[i].equals("--provider")) {
+                    providerOverride = args[++i];
+                } else if (!args[i].startsWith("-")) {
+                    testFilePath = args[i];
+                }
+            }
             
             System.out.println("╔════════════════════════════════════════════════════════════════╗");
-            System.out.println("║           Paragon Phase 1 - Manual Test Execution              ║");
+            System.out.println("║                      Paragon - Test Runner                      ║");
             System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
             
             System.out.println("📂 Loading test suite: " + testFilePath);
@@ -23,12 +42,20 @@ public class ManualTestRunner {
             // Step 1: Load YAML
             YamlLoader loader = new YamlLoader();
             TestSuite testSuite = loader.loadTestSuite(testFilePath);
-            System.out.println("✅ Loaded test suite: " + testSuite.getProvider() + " provider");
-            System.out.println("   Total tests: " + testSuite.getTests().size() + "\n");
             
-            // Step 2: Create runner and run tests
+            // Use override provider if provided, otherwise use suite's provider
+            String providerName = providerOverride != null ? providerOverride : testSuite.getProvider();
+            System.out.println("✅ Loaded test suite: " + providerName + " provider");
+            System.out.println("   Total tests: " + testSuite.getTests().size());
+            if (enableCache) {
+                System.out.println("   Caching: enabled");
+            }
+            System.out.println();
+            
+            // Step 2: Create runner with provider and run tests
             System.out.println("🏃 Running tests...\n");
-            TestRunner runner = TestRunner.create(testSuite);
+            var llmProvider = ProviderFactory.create(providerName, apiKey, enableCache);
+            TestRunner runner = new TestRunner(llmProvider);
             TestRunner.TestRunResult result = runner.runTests(testSuite);
             
             // Step 3: Report results
